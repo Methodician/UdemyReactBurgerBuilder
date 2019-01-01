@@ -2,6 +2,8 @@ import React, { Component, Fragment } from 'react';
 
 import Burger from '../../components/Burger/Burger';
 import BuildControls from '../../components/Burger/BuildControls/BuildControls';
+import Modal from '../../components/UI/Modal/Modal';
+import OrderSummary from '../../components/Burger/OrderSummary/OrderSummary';
 
 const INGREDIENT_PRICES = {
     salad: 0.5,
@@ -25,40 +27,75 @@ class BurgerBuilder extends Component {
             meat: 0,
         },
         totalPrice: 4,
+        purchaseable: false,
+        purchasing: false,
+    }
+
+    continueCheckoutHandler = () => {
+        alert('continued purchase');
+    }
+
+    cancelCheckoutHandler = () => {
+        this.setState({ purchasing: false });
+    }
+
+    checkoutHandler = () => {
+        this.setState({ purchasing: true });
+    }
+
+    updatePurchaseable = (ingredients) => {
+        // State ingredients wasn't updated in time.
+        // const ingredients = { ...this.state.ingredients };
+        const sum = Object.values(ingredients)
+            .reduce((total, next) => {
+                // console.log({ total, next });
+                return total + next;
+            }, 0);
+        const purchaseable = sum > 0;
+        this.setState({ purchaseable });
     }
 
     addIngredientHandler = (type) => {
         const ingredients = { ...this.state.ingredients };
-        ingredients[type] = ingredients[type] + 1;
+        ingredients[type] = this.state.ingredients[type] + 1;
         const totalPrice = this.state.totalPrice + INGREDIENT_PRICES[type];
-        
-        this.setState({ingredients, totalPrice});
 
+        this.setState({ ingredients, totalPrice });
+        this.updatePurchaseable(ingredients);
     }
 
     removeIngredientHandler = (type) => {
+        if (this.state.ingredients[type] <= 0) return;
         const ingredients = { ...this.state.ingredients };
-        // I like his approach better.
-        if(ingredients[type] <= 0) return;
-    // if(ingredients[type] > 0){
-        ingredients[type] = ingredients[type] - 1;
+        ingredients[type] = this.state.ingredients[type] - 1;
         const totalPrice = this.state.totalPrice - INGREDIENT_PRICES[type];
-        this.setState({ingredients, totalPrice});
-    // }
+
+        this.setState({ ingredients, totalPrice });
+        this.updatePurchaseable(ingredients);
     }
 
     render() {
-        const disabledInfo = {
+        let disabledInfo = {
             ...this.state.ingredients
         };
-        
-        return(
+        for (let key in disabledInfo) {
+            disabledInfo[key] = disabledInfo[key] <= 0;
+        }
+
+        return (
             <Fragment>
-                <p>cost: {this.state.totalPrice}</p>
+
+                <Modal modalClosed={this.cancelCheckoutHandler} show={this.state.purchasing}>
+                    <OrderSummary ingredients={this.state.ingredients} cancelClicked={this.cancelCheckoutHandler} continueClicked={this.continueCheckoutHandler} />
+                </Modal>
                 <Burger ingredients={this.state.ingredients} />
                 <BuildControls
                     ingredientAdded={this.addIngredientHandler}
-                    ingredientRemoved={this.removeIngredientHandler}></BuildControls>
+                    ingredientRemoved={this.removeIngredientHandler}
+                    disabled={disabledInfo}
+                    purchaseable={this.state.purchaseable}
+                    price={this.state.totalPrice}
+                    onCheckout={this.checkoutHandler} />
             </Fragment>
         );
     }
