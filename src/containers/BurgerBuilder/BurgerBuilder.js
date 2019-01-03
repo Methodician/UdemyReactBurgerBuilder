@@ -45,7 +45,8 @@ class BurgerBuilder extends Component {
 
     updatePurchaseable = (ingredients) => {
         // State ingredients wasn't updated in time.
-        // const ingredients = { ...this.state.ingredients };
+        // const ingredients = { ...this.state.ingredients }; didn't work.
+        // So, we just pass ingredients in directly from the function that is updating them and the state itself.
         const sum = Object.values(ingredients)
             .reduce((total, next) => {
                 // console.log({ total, next });
