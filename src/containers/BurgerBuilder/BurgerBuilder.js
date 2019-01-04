@@ -5,6 +5,8 @@ import BuildControls from '../../components/Burger/BuildControls/BuildControls';
 import Modal from '../../components/UI/Modal/Modal';
 import OrderSummary from '../../components/Burger/OrderSummary/OrderSummary';
 import Spinner from '../../components/UI/Spinner/Spinner';
+import withErrorHandler from '../../hoc/withErrorHandler/withErrorHandler';
+
 import classes from './BurgerBuilder.css';
 import axios from '../../axios-orders';
 
@@ -24,16 +26,22 @@ class BurgerBuilder extends Component {
     // }
 
     state = {
-        ingredients: {
-            salad: 0,
-            bacon: 0,
-            cheese: 0,
-            meat: 0,
-        },
+        ingredients: null,
         totalPrice: 4,
         purchaseable: false,
         purchasing: false,
         loading: false,
+        error: false,
+    }
+
+    async componentDidMount() {
+        try {
+            const res = await axios.get('/ingredients.json');
+            const ingredients = res.data;
+            this.setState({ ingredients });
+        } catch (error) {
+            this.setState({ error: true });
+        }
     }
 
     continueCheckoutHandler = async () => {
@@ -54,7 +62,7 @@ class BurgerBuilder extends Component {
                 },
                 deliveryMethod: 'fastest'
             };
-            const res = await axios.post('fsadf', order);
+            const res = await axios.post('/orders.json', order);
             console.log(res);
         } catch (error) {
             alert(JSON.stringify(error));
@@ -112,23 +120,12 @@ class BurgerBuilder extends Component {
             disabledInfo[key] = disabledInfo[key] <= 0;
         }
 
-        let summary =
-            <OrderSummary
-                ingredients={this.state.ingredients}
-                cancelClicked={this.cancelCheckoutHandler}
-                continueClicked={this.continueCheckoutHandler}
-                price={this.state.totalPrice} />;
+        let summary = null;
 
+        let burgerBilder = this.state.error ? <p>The ingedients couldn't be loaded so the app is broke :-(</p> : <Spinner />;
 
-        if (this.state.loading) {
-            summary = <Spinner />
-        }
-
-        return (
-            <Fragment>
-                <Modal modalClosed={this.cancelCheckoutHandler} show={this.state.purchasing} >
-                    {summary}
-                </Modal>
+        if (this.state.ingredients) {
+            burgerBilder = (
                 <div className={classes.BurgerContainer}>
                     <Burger ingredients={this.state.ingredients} />
                     <BuildControls
@@ -139,9 +136,29 @@ class BurgerBuilder extends Component {
                         price={this.state.totalPrice}
                         onCheckout={this.checkoutHandler} />
                 </div>
+            );
+            summary =
+                <OrderSummary
+                    ingredients={this.state.ingredients}
+                    cancelClicked={this.cancelCheckoutHandler}
+                    continueClicked={this.continueCheckoutHandler}
+                    price={this.state.totalPrice} />;
+        }
+
+        if (this.state.loading) {
+            summary = <Spinner />
+        }
+
+        return (
+            <Fragment>
+                <Modal modalClosed={this.cancelCheckoutHandler} show={this.state.purchasing} >
+                    {summary}
+                </Modal>
+                {burgerBilder}
             </Fragment>
         );
     }
 }
 
-export default BurgerBuilder;
+// Pretty interesting so we can wrap the export in the HOC...
+export default withErrorHandler(BurgerBuilder, axios);
