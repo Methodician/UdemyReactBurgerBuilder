@@ -12,7 +12,8 @@ class Modal extends Component {
     // Ultimately prevents the order summary from updating
     // I suppose implementing it here prevents any other component wrapped in a modal from updating when it's not shown!
     shouldComponentUpdate(nextProps, nextState) {
-        return nextProps.show !== this.props.show;
+        console.log(nextProps.show);
+        return nextProps.show !== this.props.show || nextProps.children !== this.props.children;
     }
 
     render() {
