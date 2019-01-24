@@ -6,13 +6,13 @@ import Backdrop from '../Backdrop/Backdrop';
 class Modal extends Component {
 
     componentWillUpdate() {
-        console.log('[MODAL] WillUpdate');
+        // console.log('[MODAL] WillUpdate');
     }
 
     // Ultimately prevents the order summary from updating
     // I suppose implementing it here prevents any other component wrapped in a modal from updating when it's not shown!
     shouldComponentUpdate(nextProps, nextState) {
-        console.log(nextProps.show);
+        // console.log(nextProps.show);
         return nextProps.show !== this.props.show || nextProps.children !== this.props.children;
     }
 
