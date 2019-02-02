@@ -11,29 +11,39 @@ class Checkout extends Component {
 
    state = {
       ingredients: {
-         salad: 3,
+         salad: 1,
          meat:1,
          cheese: 1,
          bacon: 1,
       }
    }
 
-   continueCheckoutHandler = () => {
+   componentDidMount() {
+      // No need for componentDidUpdate since this will always mount when it loads and there is no way to route to it.
+      const query = new URLSearchParams(this.props.location.search);
+      const ingredients = {};
+      for(let param of query.entries()){
+         // looks like: ['salad', '1']
+         ingredients[param[0]] = +param[1];
+      }
+      this.setState({ingredients});
+   }
+
+   checkoutContinueHandler = () => {
       this.props.history.replace('/checkout/contact-data');
    }
 
-   cancelCheckoutHandler = () => {
+   checkoutCancelHandler = () => {
       this.props.history.goBack();
    }
 
    render() {
-      console.log(this.props);
       return (
          <div>
             <CheckoutSummary
                ingredients={this.state.ingredients}
-               continueClicked={this.continueCheckoutHandler}
-               cancelClicked={this.cancelCheckoutHandler} />
+               continueClicked={this.checkoutContinueHandler}
+               cancelClicked={this.checkoutCancelHandler} />
          </div>
       );
    }

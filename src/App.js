@@ -7,6 +7,15 @@ import Checkout from './containers/Checkout/Checkout';
 
 
 class App extends Component {
+
+  componentDidMount() {
+    // console.log('props from mount', this.props);
+  }
+  
+  componentDidUpdate() {
+    // console.log('props from update', this.props);
+  }
+
   render() {
     return (
       <div>
