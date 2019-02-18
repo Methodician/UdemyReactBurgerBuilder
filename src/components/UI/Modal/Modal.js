@@ -4,6 +4,7 @@ import classes from './Modal.css';
 import Backdrop from '../Backdrop/Backdrop';
 
 class Modal extends Component {
+// He points out that we're not using PureComponent because it runs more checks than we really want...
 
     componentWillUpdate() {
         // console.log('[MODAL] WillUpdate');
