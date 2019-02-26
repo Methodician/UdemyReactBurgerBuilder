@@ -8,7 +8,13 @@ import classes from './ContactData.css';
 import axios from '../../../axios-orders';
 
 class ContactData extends Component {
-  newInputElement = (elementType, configType, configPlaceholder, value) => {
+  newInputElement = (
+    elementType,
+    configType,
+    configPlaceholder,
+    value,
+    validation,
+  ) => {
     return {
       elementType,
       elementConfig: {
@@ -17,6 +23,9 @@ class ContactData extends Component {
         placeholder: configPlaceholder,
       },
       value,
+      validation,
+      edited: false,
+      // valid: false,
     };
   };
 
@@ -29,11 +38,25 @@ class ContactData extends Component {
           placeholder: 'Your Name',
         },
         value: 'Jacob Johnston',
+        validation: { required: true },
+        edited: false,
+        //   valid: false,
       },
-      street: this.newInputElement('input', 'text', 'Street Name', ''),
-      zipCode: this.newInputElement('input', 'text', 'Zip Code', ''),
-      country: this.newInputElement('input', 'text', 'Country', ''),
-      email: this.newInputElement('input', 'email', 'Your E-Mail', ''),
+      street: this.newInputElement('input', 'text', 'Street Name', '', {
+        required: true,
+        minLength: 5,
+      }),
+      zipCode: this.newInputElement('input', 'text', 'Zip Code', '', {
+        required: true,
+        minLength: 5,
+        maxLength: 5,
+      }),
+      country: this.newInputElement('input', 'text', 'Country', '', {
+        required: true,
+      }),
+      email: this.newInputElement('input', 'email', 'Your E-Mail', '', {
+        required: true,
+      }),
       deliveryMethod: {
         elementType: 'select',
         elementConfig: {
@@ -42,7 +65,7 @@ class ContactData extends Component {
             { value: 'cheapest', displayValue: 'Cheapest' },
           ],
         },
-        value: '',
+        value: 'fastest',
       },
     },
     loading: false,
@@ -50,14 +73,22 @@ class ContactData extends Component {
 
   orderHandler = async e => {
     // default action for a button in a form is to reload with new route query params - kind of cool actually...
+    // Even when using onSubmit we want to prevent default so we don't send a request and reload the page.
     e.preventDefault();
     // console.log(this.props.ingredients);
     this.setState({ loading: true });
     // const { name, email, address } = this.state;
+    const { orderForm } = this.state;
+    const orderData = {};
+    for (let key in orderForm) {
+      orderData[key] = orderForm[key].value;
+    }
+
     try {
       const order = {
         ingredients: this.props.ingredients,
         price: this.props.totalPrice, // naturally we'd re-calc the price on the server IRL
+        orderData,
       };
       const res = await axios.post('/orders.json', order);
       if (res && res.status === 200) {
@@ -72,6 +103,27 @@ class ContactData extends Component {
     }
   };
 
+  checkValidity = (value, rules) => {
+    if (!rules) return true;
+    let isValid = true;
+    // When we defaulted isValid to false and set it to true, it would always be true if the last one was true
+    // By defaulting to false and appending && isValid, any subsequent rule after it's falsified will return false. This way all of them have to return true in sequence.
+
+    if (rules.required) {
+      isValid = value.trim() !== '' && isValid;
+    }
+
+    if (rules.minLength) {
+      isValid = value.length >= rules.minLength && isValid;
+    }
+
+    if (rules.maxLength) {
+      isValid = value.length <= rules.maxLength && isValid;
+    }
+
+    return isValid;
+  };
+
   handleInputChange = (event, inputKey) => {
     const { value } = event.target;
     // not a deep clone because the nested objects are still references
@@ -79,6 +131,12 @@ class ContactData extends Component {
     // Clones the actual form element
     const elem = { ...orderForm[inputKey] };
     elem.value = value;
+    elem.edited = true;
+    // He did it here but I found it didn't check for default values, so I opted to call the function right on the element prop definition...
+    //  const { validation } = elem;
+    //  elem.valid = this.checkValidity(value, validation);
+    // I wanted something like Angulars .touched so I added it insetad.
+
     orderForm[inputKey] = elem;
     this.setState({ orderForm });
   };
@@ -92,7 +150,12 @@ class ContactData extends Component {
         elementType={orderForm[key].elementType}
         elementConfig={orderForm[key].elementConfig}
         value={orderForm[key].value}
-        changed={event => this.handleInputChange(event, key)}
+        valid={this.checkValidity(
+          orderForm[key].value,
+          orderForm[key].validation,
+        )}
+        edited={orderForm[key].edited}
+        handleChange={event => this.handleInputChange(event, key)}
       />
     ));
     // For some reason he made formElementsArray with for let key in and then just pushed { id: key, config: this.state.orderForm[key] }
@@ -103,7 +166,7 @@ class ContactData extends Component {
     ) : (
       <div className={classes.ContactData}>
         <h4>Enter your Contact Info</h4>
-        <form>
+        <form onSubmit={this.orderHandler}>
           {/* <Input
             inputtype="input"
             type="text"

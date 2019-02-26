@@ -11,7 +11,7 @@ const input = props => {
           className={classes.InputElement}
           {...props.elementConfig}
           value={props.value}
-          onChange={props.changed}
+          onChange={props.handleChange}
         />
       );
       break;
@@ -21,7 +21,7 @@ const input = props => {
           className={classes.InputElement}
           {...props.elementConfig}
           value={props.value}
-          onChange={props.changed}
+          onChange={props.handleChange}
         />
       );
       break;
@@ -30,7 +30,7 @@ const input = props => {
         <select
           className={classes.InputElement}
           value={props.value}
-          onChange={props.changed}
+          onChange={props.handleChange}
         >
           {props.elementConfig.options.map(option => (
             <option key={option.value} value={option.value}>
@@ -46,13 +46,15 @@ const input = props => {
           className={classes.InputElement}
           {...props.elementConfig}
           value={props.value}
-          onChange={props.changed}
+          onChange={props.handleChange}
         />
       );
   }
   return (
     <div className={classes.Input}>
-      <label className={classes.Label}>{props.label}</label>
+      <label className={classes.Label}>
+        {props.label} {props.valid || !props.edited ? '' : 'INVALID'}
+      </label>
       {inputElement}
     </div>
   );
