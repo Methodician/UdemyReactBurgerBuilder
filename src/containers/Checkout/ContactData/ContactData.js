@@ -30,6 +30,7 @@ class ContactData extends Component {
   };
 
   state = {
+    isFormValid: false,
     orderForm: {
       name: {
         elementType: 'input',
@@ -103,22 +104,23 @@ class ContactData extends Component {
     }
   };
 
-  checkValidity = (value, rules) => {
-    if (!rules) return true;
+  checkValidity = formElementKey => {
+    const { value, validation } = this.state.orderForm[formElementKey];
+    if (!validation) return true;
     let isValid = true;
     // When we defaulted isValid to false and set it to true, it would always be true if the last one was true
     // By defaulting to false and appending && isValid, any subsequent rule after it's falsified will return false. This way all of them have to return true in sequence.
 
-    if (rules.required) {
+    if (validation.required) {
       isValid = value.trim() !== '' && isValid;
     }
 
-    if (rules.minLength) {
-      isValid = value.length >= rules.minLength && isValid;
+    if (validation.minLength) {
+      isValid = value.length >= validation.minLength && isValid;
     }
 
-    if (rules.maxLength) {
-      isValid = value.length <= rules.maxLength && isValid;
+    if (validation.maxLength) {
+      isValid = value.length <= validation.maxLength && isValid;
     }
 
     return isValid;
@@ -135,10 +137,16 @@ class ContactData extends Component {
     // He did it here but I found it didn't check for default values, so I opted to call the function right on the element prop definition...
     //  const { validation } = elem;
     //  elem.valid = this.checkValidity(value, validation);
-    // I wanted something like Angulars .touched so I added it insetad.
+    // I wanted something like Angulars .touched so I added it insetad. (later he did something similar in a way I didn't like as much)
+
+    // Check for overall form validity each time
+    let isFormValid = true;
+    for (let key in orderForm) {
+      isFormValid = this.checkValidity(key) && isFormValid;
+    }
 
     orderForm[inputKey] = elem;
-    this.setState({ orderForm });
+    this.setState({ orderForm, isFormValid });
   };
 
   render() {
@@ -150,10 +158,7 @@ class ContactData extends Component {
         elementType={orderForm[key].elementType}
         elementConfig={orderForm[key].elementConfig}
         value={orderForm[key].value}
-        valid={this.checkValidity(
-          orderForm[key].value,
-          orderForm[key].validation,
-        )}
+        valid={this.checkValidity(key)}
         edited={orderForm[key].edited}
         handleChange={event => this.handleInputChange(event, key)}
       />
@@ -176,7 +181,11 @@ class ContactData extends Component {
           {/* <Input elementType="..." elementConfig="..." value="..." /> */}
           {formElementsArray}
 
-          <Button clicked={this.orderHandler} btnType="Success">
+          <Button
+            disabled={!this.state.isFormValid}
+            clicked={this.orderHandler}
+            btnType="Success"
+          >
             ORDER
           </Button>
         </form>
